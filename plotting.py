@@ -47,7 +47,7 @@ def plot_manipulator(angle1,angle2):
     
 def f(**kwargs):
     plot_manipulator(**kwargs)
-    # plt.show()
+    plt.show()
     
 
 sldr = lambda v, mi, ma: widgets.FloatSlider(
@@ -92,7 +92,7 @@ class GaitTrajectory:
         
         plot_manipulator(self.theta_1[timestep],self.theta_2[timestep])
         self.plot_foot_trajectory()
-        # plt.show()
+        plt.show()
         
     def get_plot(self):
         
