@@ -54,6 +54,8 @@ def interactive_leg():
 
 def GaitTrajectory(theta1_list, theta2_list):
 
+    assert len(theta1_list)==len(theta2_list),"The number of hip angles (%d) must equal the number of knee angles (%d)."%(len(theta1_list),len(theta2_list)) 
+
     l1, l2 = 0.3, 0.2
 
     def calculate_end_effector(theta1, theta2):
