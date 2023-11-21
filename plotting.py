@@ -22,7 +22,7 @@ def interactive_leg():
     source1 = ColumnDataSource(data=dict(x=[x0, x1], y=[y0, y1]))
     source2 = ColumnDataSource(data=dict(x=[x1, x2], y=[y1, y2]))
 
-    plot = figure(width=400, height=400, x_range=(-1, 1), y_range=(-1, 1))
+    plot = figure(width=600, height=600, x_range=(-1, 1), y_range=(-1, 1))
     plot.line('x', 'y', source=source1, line_width=3, line_alpha=1.0, color="blue")
     plot.line('x', 'y', source=source2, line_width=3, line_alpha=1.0, color="orange")
 
@@ -80,7 +80,7 @@ def GaitTrajectory(theta1_list, theta2_list):
     source_link2 = ColumnDataSource(data=dict(x=[x1, x2], y=[y1, y2]))
     source_trajectory = ColumnDataSource(data=dict(x=trajectory_x, y=trajectory_y))
 
-    plot = figure(width=400, height=400, x_range=(-1, 1), y_range=(-1, 1))
+    plot = figure(width=600, height=600, x_range=(-1, 1), y_range=(-1, 1))
 
     plot.line('x', 'y', source=source_trajectory, line_width=1, color="gray", alpha=0.6)
     plot.circle('x', 'y', source=source_trajectory, size=5, color="gray", alpha=0.6)
