@@ -2,6 +2,8 @@ import numpy as np
 from bokeh.models import ColumnDataSource, CustomJS, Slider
 from bokeh.plotting import figure
 from bokeh.models.glyphs import Quad
+from bokeh.layouts import column
+from bokeh.plotting import show
 
 
 def interactive_leg():
@@ -47,7 +49,7 @@ def interactive_leg():
     theta1_slider.js_on_change('value', callback)
     theta2_slider.js_on_change('value', callback)
 
-    return theta1_slider, theta2_slider, plot
+    show(column(theta1_slider, theta2_slider, plot))
 
 
 def GaitTrajectory(theta1_list, theta2_list):
@@ -105,4 +107,4 @@ def GaitTrajectory(theta1_list, theta2_list):
 
     time_step_slider.js_on_change('value', callback)
 
-    return plot, time_step_slider
+    show(column(plot, time_step_slider))
