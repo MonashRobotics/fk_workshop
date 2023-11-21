@@ -23,8 +23,8 @@ def interactive_leg():
     source2 = ColumnDataSource(data=dict(x=[x1, x2], y=[y1, y2]))
 
     plot = figure(width=400, height=400, x_range=(-1, 1), y_range=(-1, 1))
-    plot.line('x', 'y', source=source1, line_width=3, line_alpha=0.6, color="blue")
-    plot.line('x', 'y', source=source2, line_width=3, line_alpha=0.6, color="orange")
+    plot.line('x', 'y', source=source1, line_width=3, line_alpha=1.0, color="blue")
+    plot.line('x', 'y', source=source2, line_width=3, line_alpha=1.0, color="orange")
 
     ground = Quad(left=-1, right=1, top=-0.5, bottom=-1, fill_color="green", line_color="green", fill_alpha = 0.5)
     plot.add_glyph(ground)
@@ -76,7 +76,8 @@ def GaitTrajectory(theta1_list, theta2_list):
     x2 = x1 + l2 * np.cos(np.radians(theta1_list[0] + theta2_list[0]))
     y2 = y1 + l2 * np.sin(np.radians(theta1_list[0] + theta2_list[0]))
 
-    source_manipulator = ColumnDataSource(data=dict(x=[x0, x1, x2], y=[y0, y1, y2]))
+    source_link1 = ColumnDataSource(data=dict(x=[x0, x1], y=[y0, y1]))
+    source_link2 = ColumnDataSource(data=dict(x=[x1, x2], y=[y1, y2]))
     source_trajectory = ColumnDataSource(data=dict(x=trajectory_x, y=trajectory_y))
 
     plot = figure(width=400, height=400, x_range=(-1, 1), y_range=(-1, 1))
@@ -84,14 +85,15 @@ def GaitTrajectory(theta1_list, theta2_list):
     plot.line('x', 'y', source=source_trajectory, line_width=1, color="gray", alpha=0.6)
     plot.circle('x', 'y', source=source_trajectory, size=5, color="gray", alpha=0.6)
 
-    plot.line('x', 'y', source=source_manipulator, line_width=3, line_alpha=0.6, color="blue")
+    plot.line('x', 'y', source=source_link1, line_width=3, line_alpha=1.0, color="blue")
+    plot.line('x', 'y', source=source_link2, line_width=3, line_alpha=1.0, color="orange")
 
     ground = Quad(left=-1, right=1, top=-0.5, bottom=-1, fill_color="green", line_color="green", fill_alpha=0.5)
     plot.add_glyph(ground)
 
     time_step_slider = Slider(start=0, end=len(theta1_list)-1, value=0, step=1, title="Time Step")
 
-    callback = CustomJS(args=dict(source_manipulator=source_manipulator, time_step_slider=time_step_slider, theta1_list=theta1_list, theta2_list=theta2_list, l1=l1, l2=l2),
+    callback = CustomJS(args=dict(source_link1=source_link1, source_link2 = source_link2, time_step_slider=time_step_slider, theta1_list=theta1_list, theta2_list=theta2_list, l1=l1, l2=l2),
                         code="""
         const time_step = time_step_slider.value;
         const theta1_deg = theta1_list[time_step];
@@ -104,7 +106,8 @@ def GaitTrajectory(theta1_list, theta2_list):
         const x2 = x1 + l2 * Math.cos(theta1_rad + theta2_rad);
         const y2 = y1 + l2 * Math.sin(theta1_rad + theta2_rad);
 
-        source_manipulator.data = { x: [0, x1, x2], y: [0, y1, y2] };
+        source_link1.data = { x: [0, x1], y: [0, y1] };
+        source_link2.data = { x: [x1, x2], y: [y1, y2] };
     """)
 
     time_step_slider.js_on_change('value', callback)
