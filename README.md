@@ -6,7 +6,7 @@ In this workshop you will learn about robot kinematics (the study of positions a
     <img src="https://github.com/MonashRobotics/DingoQuadruped/blob/master/assets/JEL05566.jpg?raw=true" style="align:centre" width="50%">
 </p>
 
-Click [here](https://colab.research.google.com/github/MonashRobotics/fk_workshop/blob/main/forward_kinematics.ipynb) to start the code. You may need to log in using a google account.
+Click [here](https://colab.research.google.com/github/MonashRobotics/fk_workshop/blob/bokeh/forward_kinematics.ipynb) to start the code. You may need to log in using a google account.
 
 
 

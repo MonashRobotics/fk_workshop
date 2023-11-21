@@ -1,139 +1,108 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import numpy as np
-
-from ipywidgets import interactive, widgets
-import matplotlib.animation as animation
-
-def plot_manipulator(angle1,angle2):
-    
-    link1_length = 0.3
-    link2_length = 0.2
-    # Convert joint angles to radians
-    theta1 = np.radians(angle1)
-    theta2 = np.radians(angle2)
-
-    # Calculate end effector position
-    x_end = link1_length * np.cos(theta1) + link2_length * np.cos(theta1 + theta2)
-    y_end = link1_length * np.sin(theta1) + link2_length * np.sin(theta1 + theta2)
-
-    # Create figure and axis
-    fig, ax = plt.subplots(figsize=(6, 6))
-
-    # Plot links using patches
-    link1 = patches.Rectangle((0, 0), link1_length, 0.05, angle=np.degrees(theta1), ec='black', fc='C0',alpha=0.5)
-    link2 = patches.Rectangle((link1_length * np.cos(theta1), link1_length * np.sin(theta1)), link2_length, 0.05,
-                              angle=np.degrees(theta1 + theta2), ec='black', fc='C1',alpha=0.5)
-    
-    ground = patches.Rectangle((-1, -1), 2, 0.5, angle=0, fc='C2',alpha=0.7)
-
-    # Add patches to the axis
-    ax.add_patch(link1)
-    ax.add_patch(link2)
-    ax.add_patch(ground)
-    
-    # Set plot limits and aspect ratio
-    plt.xlim(-1, 1)
-    plt.ylim(-1, 1)
-    ax.set_aspect('equal', 'box')
-
-    # Set labels and title
-    plt.xlabel('X Position')
-    plt.ylabel('Y Position')
-    plt.title('Simple Leg')
-
-    # Show the plot
-    plt.grid(True)
-    
-def f(**kwargs):
-    plot_manipulator(**kwargs)
-    plt.show()
-    
-
-sldr = lambda v, mi, ma: widgets.FloatSlider(
-    value=v,
-    min=mi,
-    max=ma,
-    step=.01,
-)
-
-names = [
-    ['angle1', [-45, -180, 180]],
-    ['angle2', [30, -180, 180]],
-]
-
-i_sldr = lambda v, mi, ma: widgets.IntSlider(
-    value=v,
-    min=mi,
-    max=ma,
-    step=1,
-)
-
-interactive_leg = interactive(f, **{s[0] : sldr(*s[1]) for s in names})
-
-def f_gait(**kwargs):
-    
-    plot_manipulator(**kwargs)
+from bokeh.models import ColumnDataSource, CustomJS, Slider
+from bokeh.plotting import figure
+from bokeh.models.glyphs import Quad
 
 
-class GaitTrajectory:
-    
-    def __init__(self,theta_1,theta_2):
-         
-        assert len(theta_1)==len(theta_2),"The number of hip angles (%d) must equal the number of knee angles (%d)."%(len(theta_1),len(theta_2))
-         
-        self.theta_1 = theta_1+theta_1
-        self.theta_2 = theta_2+theta_2
-        
-        self.rn = [0,0,min(len(self.theta_1),len(self.theta_2))-1]
-        
-        
-    def plot_m(self,timestep):
-        
-        plot_manipulator(self.theta_1[timestep],self.theta_2[timestep])
-        self.plot_foot_trajectory()
-        plt.show()
-        
-    def get_plot(self):
-        
-        return interactive(self.plot_m, **{'timestep':i_sldr(*self.rn)})
-    
-    
-    def plot_foot_trajectory(self):
-        
-        
-        link1_length = 0.3
-        link2_length = 0.2
-        # Convert joint angles to radians
-        theta1 = np.radians(self.theta_1)
-        theta2 = np.radians(self.theta_2)
+def interactive_leg():
+    # Initialize the angles (in radians)
+    theta1 = np.radians(-90)
+    theta2 = np.radians(0)
 
-        # Calculate end effector position
-        x_end = link1_length * np.cos(theta1) + link2_length * np.cos(theta1 + theta2)
-        y_end = link1_length * np.sin(theta1) + link2_length * np.sin(theta1 + theta2)
-        
-        
-        plt.plot(x_end,y_end,label='foot position')
-        plt.grid(True)
-    
-def plot_foot_trajectory(theta_1,theta_2):
-    
-        assert len(theta_1)==len(theta_2),"The number of hip angles (%d) must equal the number of knee angles (%d)."%(len(theta_1),len(theta_2)) 
-        
-        link1_length = 0.3
-        link2_length = 0.2
-        # Convert joint angles to radians
-        theta1 = np.radians(theta_1)
-        theta2 = np.radians(theta_2)
+    l1, l2 = 0.3, 0.2
 
-        # Calculate end effector position
-        x_end = link1_length * np.cos(theta1) + link2_length * np.cos(theta1 + theta2)
-        y_end = link1_length * np.sin(theta1) + link2_length * np.sin(theta1 + theta2)
-        
-        plt.plot(x_end,'-o',label='foot x position')
-        plt.plot(y_end,'-o',label='foot y position')
+    x0, y0 = 0, 0
+    x1 = l1 * np.cos(theta1)
+    y1 = l1 * np.sin(theta1)
+    x2 = x1 + l2 * np.cos(theta1 + theta2)
+    y2 = y1 + l2 * np.sin(theta1 + theta2)
 
-        plt.grid(True)
-        plt.legend()
-        
-        plt.show()
+    source1 = ColumnDataSource(data=dict(x=[x0, x1], y=[y0, y1]))
+    source2 = ColumnDataSource(data=dict(x=[x1, x2], y=[y1, y2]))
+
+    plot = figure(width=400, height=400, x_range=(-1, 1), y_range=(-1, 1))
+    plot.line('x', 'y', source=source1, line_width=3, line_alpha=0.6, color="blue")
+    plot.line('x', 'y', source=source2, line_width=3, line_alpha=0.6, color="orange")
+
+    ground = Quad(left=-1, right=1, top=-0.5, bottom=-1, fill_color="green", line_color="green", fill_alpha = 0.5)
+    plot.add_glyph(ground)
+
+    theta1_slider = Slider(start=-180, end=180, value=-90, step=1, title="angle1")
+    theta2_slider = Slider(start=-180, end=180, value=0, step=1, title="angle2")
+
+    callback = CustomJS(args=dict(source1=source1, source2=source2, theta1=theta1_slider, theta2=theta2_slider, l1=l1, l2=l2),
+                        code="""
+        const theta1_rad = (theta1.value * Math.PI) / 180;
+        const theta2_rad = (theta2.value * Math.PI) / 180;
+
+        const x1 = l1 * Math.cos(theta1_rad);
+        const y1 = l1 * Math.sin(theta1_rad);
+        const x2 = x1 + l2 * Math.cos(theta1_rad + theta2_rad);
+        const y2 = y1 + l2 * Math.sin(theta1_rad + theta2_rad);
+
+        source1.data = { x: [0, x1], y: [0, y1] };
+        source2.data = { x: [x1, x2], y: [y1, y2] };
+    """)
+
+    theta1_slider.js_on_change('value', callback)
+    theta2_slider.js_on_change('value', callback)
+
+    return theta1_slider, theta2_slider, plot
+
+
+def GaitTrajectory(theta1_list, theta2_list):
+
+    l1, l2 = 0.3, 0.2
+
+    def calculate_end_effector(theta1, theta2):
+        theta1_rad = np.radians(theta1)
+        theta2_rad = np.radians(theta2)
+        x1 = l1 * np.cos(theta1_rad)
+        y1 = l1 * np.sin(theta1_rad)
+        x2 = x1 + l2 * np.cos(theta1_rad + theta2_rad)
+        y2 = y1 + l2 * np.sin(theta1_rad + theta2_rad)
+        return x2, y2
+
+    trajectory_x, trajectory_y = zip(*[calculate_end_effector(theta1, theta2) for theta1, theta2 in zip(theta1_list, theta2_list)])
+
+    initial_angles = (theta1_list[0], theta2_list[0])
+    x0, y0 = 0, 0
+    x1 = l1 * np.cos(np.radians(theta1_list[0]))
+    y1 = l1 * np.sin(np.radians(theta1_list[0]))
+    x2 = x1 + l2 * np.cos(np.radians(theta1_list[0] + theta2_list[0]))
+    y2 = y1 + l2 * np.sin(np.radians(theta1_list[0] + theta2_list[0]))
+
+    source_manipulator = ColumnDataSource(data=dict(x=[x0, x1, x2], y=[y0, y1, y2]))
+    source_trajectory = ColumnDataSource(data=dict(x=trajectory_x, y=trajectory_y))
+
+    plot = figure(width=400, height=400, x_range=(-1, 1), y_range=(-1, 1))
+
+    plot.line('x', 'y', source=source_trajectory, line_width=1, color="gray", alpha=0.6)
+    plot.circle('x', 'y', source=source_trajectory, size=5, color="gray", alpha=0.6)
+
+    plot.line('x', 'y', source=source_manipulator, line_width=3, line_alpha=0.6, color="blue")
+
+    ground = Quad(left=-1, right=1, top=-0.5, bottom=-1, fill_color="green", line_color="green", fill_alpha=0.5)
+    plot.add_glyph(ground)
+
+    time_step_slider = Slider(start=0, end=len(theta1_list)-1, value=0, step=1, title="Time Step")
+
+    callback = CustomJS(args=dict(source_manipulator=source_manipulator, time_step_slider=time_step_slider, theta1_list=theta1_list, theta2_list=theta2_list, l1=l1, l2=l2),
+                        code="""
+        const time_step = time_step_slider.value;
+        const theta1_deg = theta1_list[time_step];
+        const theta2_deg = theta2_list[time_step];
+        const theta1_rad = theta1_deg * Math.PI / 180;
+        const theta2_rad = theta2_deg * Math.PI / 180;
+
+        const x1 = l1 * Math.cos(theta1_rad);
+        const y1 = l1 * Math.sin(theta1_rad);
+        const x2 = x1 + l2 * Math.cos(theta1_rad + theta2_rad);
+        const y2 = y1 + l2 * Math.sin(theta1_rad + theta2_rad);
+
+        source_manipulator.data = { x: [0, x1, x2], y: [0, y1, y2] };
+    """)
+
+    time_step_slider.js_on_change('value', callback)
+
+    return plot, time_step_slider
